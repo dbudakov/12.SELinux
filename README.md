@@ -1,10 +1,17 @@
-Для выполнения первой части задания приводим файл /etc/nginx/nginx.conf  
-к следующему виду:  
-![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/main_nginx.conf.png)  
-и раскомментим строку с нестандартым портом  
-![](https://github.com/dbudakov/11.SELinux/blob/master/images/1.1/nginx.conf_1.png)  
+Для выполнения первой части задания и назначения нестандартного порта добаляем строку `listen 5081;` в соответствующий контектст в файле `/etc/nginx/nginx.conf`   
+```
+    server {
+        listen       5081 ;
+        listen       80 default_server;
+        listen       [::]:80 default_server;
+        server_name  _;
+        root         /usr/share/nginx/html;
+```
 Перезапустив `nginx`, он выпадет в ошибку  
-![](https://github.com/dbudakov/11.SELinux/blob/master/images/1.1/restart_nginx_1.png)  
+```
+[root@SELinux vagrant]# systemctl restart nginx.service
+Job for nginx.service failed because the control process exited with error code. See "systemctl status nginx.service" and "journalctl -xe" for details.
+```
 статус демона следующий:  
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/1.1/status%20nginx%201.png)  
 Обращаем внимание на строку `nginx: [emerg] bind() to 0.0.0.0:5081 failed (13: Permission denied)`  
