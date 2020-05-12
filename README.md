@@ -20,3 +20,23 @@
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/way%202.png)  
 Эти команды формируют модуль, на основе анализа лога audit.log, довольно дорогой способ, но локализует и решает ошибки с разрешениями  
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/way%203.png)  
+
+Команда добавляет указанный порт в тип указанного контекста, в выводе указаны каие типы можно расширить    
+```
+Do
+# semanage port -a -t PORT_TYPE -p tcp 5081
+    where PORT_TYPE is one of the following: http_cache_port_t, http_port_t, jboss_management_port_t, jboss_messaging_port_t, ntop_port_t, puppet_port_t.
+```
+Команда разрешает использование нестандартных портов, по сути открывает всем сервисам такую возможноть, что сравнимо с отключением SELinux  
+```
+Do
+setsebool -P nis_enabled 1
+```
+
+Эти команды формируют модуль, на основе анализа лога audit.log, довольно дорогой способ, но локализует и решает ошибки с разрешениями
+```
+Do
+allow this access for now by executing:
+# ausearch -c 'nginx' --raw | audit2allow -M my-nginx
+# semodule -i my-nginx.pp
+```
