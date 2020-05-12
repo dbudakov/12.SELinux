@@ -54,7 +54,7 @@ ss -ntpl |grep nginxf
 semanage port -d -t http_port_t -p tcp 5081
 ```
 
-Далее сформируем модуль для сервиса на порт 5081. Для начала посмотрим какая информация передается для формирования модуля  
+Для второго пункта сформируем модуль для сервиса на порт 5081. Для начала посмотрим какая информация передается для формирования модуля  
 ```
 ausearch -c 'nginx' --raw 
 ```
@@ -74,5 +74,17 @@ ss -ntpl | grep nginx
 ```
 semodule -r my-nginx
 ```
-
-
+Для третьего пункта разрешить использование нестандартных портов можно по команде
+```
+setsebool -P nis_enabled 1
+```
+Перезапускаем `nginx` и проверяем открытые порты для `nginx`
+```
+systemctl restart nginx
+ss -ntpl | grep nginx
+```
+![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/nginx_3.png)  
+Отключить данную функцию можно так:
+```
+setsebool -P nis_enabled 0
+```
