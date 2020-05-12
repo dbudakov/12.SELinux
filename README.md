@@ -17,21 +17,22 @@ Job for nginx.service failed because the control process exited with error code.
 
 ```
 В выводе мы увидим много информации и способы решения ошибки с запуском nginx а именно:  
+Добавление указанного порта в тип указанного контекста, в выводе указаны каие типы можно расширить    
 ```
 Do
 # semanage port -a -t PORT_TYPE -p tcp 5081
     where PORT_TYPE is one of the following: http_cache_port_t, http_port_t, jboss_management_port_t, jboss_messaging_port_t, ntop_port_t, puppet_port_t.
 ```
-Команда добавляет указанный порт в тип указанного контекста, в выводе указаны каие типы можно расширить    
+Разрешение использования нестандартных портов, по сути открывает всем сервисам такую возможноть, что сравнимо с отключением SELinux  
 ```
 Do
 setsebool -P nis_enabled 1
 ```
-Команда разрешает использование нестандартных портов, по сути открывает всем сервисам такую возможноть, что сравнимо с отключением SELinux  
+Команды формирующие модуль, на основе анализа лога audit.log, довольно дорогой способ, но локализует и решает ошибки с разрешениями
 ```
 Do
 allow this access for now by executing:
 # ausearch -c 'nginx' --raw | audit2allow -M my-nginx
 # semodule -i my-nginx.pp
 ```
-Эти команды формируют модуль, на основе анализа лога audit.log, довольно дорогой способ, но локализует и решает ошибки с разрешениями
+
