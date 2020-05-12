@@ -49,3 +49,15 @@ systemctl restart nginx
 ss -ntpl |grep nginxf
 ```
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/1_nginx.png)  
+Удаляем порт из указанного типа, для теста других методов
+```
+semanage port -d -t http_port_t -p tcp 5081
+```
+
+Далее сформируем модуль для сервиса на порт 5081. Для начала посмотрим какая информация передается для формирования модуля
+```
+ausearch -c 'nginx' --raw 
+```
+![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/1_ausearch.png)  
+
+
