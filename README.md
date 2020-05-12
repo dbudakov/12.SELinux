@@ -42,3 +42,10 @@ allow this access for now by executing:
 # semodule -i my-nginx.pp
 ```
 
+Итак первый пункт, добавляем порт в нужный тип контекста, перезапускаем nginx, смотрим завязанные порты на nginx
+```
+semanage port -a -t http_port_t -p tcp 5081
+systemctl restart nginx
+ss -ntpl |grep nginxf
+```
+![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/1_nginx.png)  
