@@ -14,6 +14,6 @@
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/sealert.png)  
 
 В выводе мы увидим много информации и способы решения ошибки с запуском nginx а именно:  
-![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/way%201.png)  
+![](https://github.com/dbudakov/11.SELinux/blob/master/images/1.1/sealert_1.png)  
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/way%202.png)  
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/way%203.png)  
