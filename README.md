@@ -14,6 +14,9 @@
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/sealert.png)  
 
 В выводе мы увидим много информации и способы решения ошибки с запуском nginx а именно:  
+Команда добавляет указанный порт в тип указанного контекста, в выводе указаны каие типы можно расширить  
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/1.1/sealert_1.png)  
+Команда разрешает использование нестандартных портов, по сути открывает всем сервисам такую возможноть, что сравнимо с отключением SELinux  
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/way%202.png)  
+Эти команды формируют модуль, на основе анализа лога audit.log, довольно дорогой способ, но локализует и решает ошибки с разрешениями  
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/way%203.png)  
