@@ -15,7 +15,7 @@ Job for nginx.service failed because the control process exited with error code.
 статус демона следующий:  
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/1.1/status%20nginx%201.png)  
 Обращаем внимание на строку `nginx: [emerg] bind() to 0.0.0.0:5081 failed (13: Permission denied)`  
-Далее зачистим и проанализируем audit.log, при помощи sealert, после зачисти ОБЯЗАТЕЛЬНО вновь перезапусть `nginx` чтобы было что анализировать. 
+Далее зачистим и проанализируем `audit.log`, при помощи `sealert`, после зачистки ОБЯЗАТЕЛЬНО вновь перезапусть `nginx` чтобы было что анализировать. 
 ```
 [root@SELinux vagrant]# >/var/log/audit/audit.log
 [root@SELinux vagrant]# systemctl restart nginx.service
