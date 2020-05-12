@@ -54,10 +54,25 @@ ss -ntpl |grep nginxf
 semanage port -d -t http_port_t -p tcp 5081
 ```
 
-Далее сформируем модуль для сервиса на порт 5081. Для начала посмотрим какая информация передается для формирования модуля
+Далее сформируем модуль для сервиса на порт 5081. Для начала посмотрим какая информация передается для формирования модуля  
 ```
 ausearch -c 'nginx' --raw 
 ```
-![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/1_ausearch.png)  
+![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/1_ausearch.png)   
+из вывода видно что она зависит от содержимого в файле `audit.log`, поэтому для формирования только нужного лога его желательно зачистить, и перезапустить рассматриваемый сервис. Запускаем формирование модуля и его включение, включени происходит через файл с расширением `.pp`  
+```
+ausearch -c 'nginx' --raw | audit2allow -M my-nginx
+semodule -i my-nginx.pp
+```
+Для проверки перезапускаем `nginx` и смонтри на открытые для него порты  
+```
+systemctl restart nginx
+ss -ntpl | grep nginx
+```
+![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/nginx_2.png)  
+Отключаем модуль:  
+```
+semodule -r my-nginx
+```
 
 
