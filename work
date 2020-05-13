@@ -1,0 +1,13 @@
+yum install epel-release setools-console policycoreutils-python nginx setroubleshoot-server -y
+
+1
+vi /etc/nginx/nginx.conf
+1.1
+  semanage port -l|grep http_port_t
+  semanage port -a -t http_port_t -p tcp 5081
+1.2
+  sealert -a /var/log/audit/audit.log
+  setsebool -P nis_enabled 1
+1.3
+  ausearch -c 'nginx' --raw | audit2allow -M my-nginx
+  semodule -i my-nginx.pp

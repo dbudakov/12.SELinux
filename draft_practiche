@@ -1,0 +1,219 @@
+ls -Z /var/
+  system_u:object_r:acct_data_t:s0 account
+  system_u:object_r:var_t:s0 adm
+  system_u:object_r:var_t:s0 cache
+    Нужно смотреть на :s0
+
+semanage user -l # выводит пользователей selinux
+  MLS/MCS Level - уровень доступа
+  MLS/MCS Range - ренж, о том что могут быть и другие
+  SELinux Roles - существующие роли
+
+setstatus # статус настроек
+
+Пользователи системы и selinux сопостовляются только руками, через создание и привязки.
+
+chcat -L -l testuser1
+yum install mcstransd # удобный сервис для работы с политиками
+
+semanage user -a -L s0:c1 -R staff_r marketing_u # заданиe range s0:c1 в отношении роли staff_r для marketing_u в рамках selinux
+
+semanage user -a -L s0:c2 -R staff_r engineers_u
+semanage user -a -L s0:c3 -R staff_r topsecret_u
+
+semanage user -a -L s0:c3 -R "staff_r" -rs0-Engineers engineers_u
+
+adduser testuser1
+semanage login -a -s engineers_u testuser1
+chcat -l -- +Engineers testuser1
+
+man semanage
+semanage login -l
+
+Механизмы мандатно управления доступом:
+  RBAC (Roles Based Access Control, управление доступом на остове ролей) (53 стр перезентации, 53 минута вебинара)
+  TE(Type Enforcement, принудительная тепезация доступа)[system_u:object_r:var_t:s0]
+    58 слайд,01:02 минута
+   60/61/63(от RHEL) слайд - схема, 01:06 минута
+  Контекст безопасности (context) - по сути та же метка, выглядит как строка переменной длины и хранится в расширенных атрибутах файловой системы. Объединяет в себе роли, типы и домены
+  Домен(domain) - список действий, которые может выполнять процесс по отношению к различным объектам. Определяют какие роли являются авторизованными. Могут получать доступ к определённым типам файлов
+  Тип(type) - атрибут объекта, который определяет, кто может получить к нему доступ
+  Роль - атрибут, который определяет, в какие домены может входить пользователь, то есть какие домены пользователь имеет право запускать. Определяют какие пользователи являются авторизованными
+
+    system_u:object_r:var_t:s0
+    user_u:user_r:user_t
+    Selinux_user:SELinux_role:SELinux type(Domain):SELinux sensitivity
+
+  USER->ROLE->DOMAIN->FILE
+
+Инструменты для работы:
+
+  setools-console
+    sesearch
+    seinfo
+    findcon
+    getsebool
+    setsebool
+
+  policycoreutins-python
+    audit2allow
+    audit2why
+
+  policycoreutis-newrole
+    newrole
+
+  selinux-policy-mls
+    selinux-policy-mls
+
+Особенности работы:
+
+  Context transition(переход контекста) может быть инициирован политикой, такими инмтрументами, как runcon, или с помощью SELinux API
+
+  Переход Process context(domain) может происходить при наличии трех условий:
+    - целевой контекст файла является исполняемым для исходного домена
+    - целевой контекст файла помечен как точка входа для целевого домена(endrepoint)
+    - исходный домен разрешен для перехода в целевой домен
+
+  Процесс наследования типов:
+    схема на слайде 76, 01:16 вибинара
+      правило для домена shadow_t
+        sesearch -A -s shadow_t
+         >allow shadow_w shadow_t:filesystem associate;
+         >allow file_type fs_t: filesysterm associate;
+         >***
+      правило сопоставления доменов:
+        sesearch -s passwd_t -t passwd_exec_t -c file -p execute -Ad
+          >allow passwd_t passwd_exec_t:file{ioctl read getattr lock map execute execute_no_trans_entrypoint_ope*}
+
+Самосборный пакет
+Если нужно запустить несговорчивое или сомнительное
+приложение - запускать его надо из каталога /opt, в нем SELinux не
+работает
+
+Контексты лежат вот по этому пути
+  /etc/selinux/targeted/contexts/files
+
+Смотрим контексты файлов
+ls -Z /root/
+  >-rw-------. root root system_u:object_r:admin_home_t:s0 anaconda-ks.cfg
+  >-rw-------. root root system_u:object_r:admin_home_t:s0 original-ks.cfg
+    system_u:object_r:admin_home_t:s0 - контекст безопасности
+    system_u - информация о пользователе
+    object_r - роль пользователя
+    admin_home_t - тип и домен
+    s0 - уровень доступа MLS
+
+Смотрим контекст безопасности объекта
+ls -Z /usr/sbin/nginx
+
+Cмотрим информацию о пользователе
+id -Z         # контекст пользователя
+
+Смотрим информацию о правах пользователей
+semanage login -l
+  >Login Name   SELinux User  MLS/MCS Range   Service
+  >__default__  unconfined_u  s0-s0:c0.c1023  *
+  >root         unconfined_u  s0-s0:c0.c1023  *
+  >system_u     system_u      s0-s0:c0.c1023  *
+
+Смотрим контекст безопасности процесса
+ps -Z 6798
+  >LABEL                          PID   TTY   STAT  TIME  COMMAND
+  >system_u:system_r:httpd_t:s0   6798  ?     Ss    0:00  nginx: master process /usr/sbin/nginx -c /etc/nginx/nginx.conf
+
+Пример поиска разрешающих правил для типа httpd_t
+sesearch -A -s httpd_t|grep 'allow httpd_t'
+  >allow httpd_t zarafa_var_lib_t : dir { ioctl read write create getattr setattr lock unlink link rename
+add_name remove_name reparent search rmdir open } ;
+  >allow httpd_t antivirus_t : process transition ;
+
+
+sesearch -s httpd_t -t httpd_exec_t -c file -p execute -Ad # показывает что будет если мы домену httpd_t разрешим доступ к домену httpd_exec_t
+  >Found 1 semantic av rules:
+  >allow httpd_t httpd_exec_t : file { ioctl read getattr lock map execute execute_no_trans entrypoint open } ;
+
+Конфиг selinux
+
+Конфигурация SELinux:
+  /etc/selinux/config
+Узнать в каком режиме SELinux сейчас:
+  sestatus или getenforce
+Отключить SELinux:
+  setenforce 0
+Включить SELinux:
+  setenforce 0
+Статус selinux:
+  sestatus
+
+ls -lah /sys/fs/selinux
+getenforce
+
+SSH:
+При смене порта на ssh в конфиге sshd_conf есть строка:
+  # semanage port -a -t ssh_port_t -p tcp [PORTNUMBER]
+  и при смене порта, после перезагрузки sshd демон не поднимется из-за selinux
+    audit2why < /var/log/audit/audit.log # выдает лог ошибок в особочитаемом виде
+    semanage port -l|grep ssh или semanage port -l|less # выводит список разрешённых портов для сервисов
+  Дальше мы копируем ту самую упомянутую строку из конфига и вводим в консоль с указанием порта
+    semanage port -a -t ssh_port_t -p tcp 5022
+  После этого в выводе 'semanage port -l|grep ssh' появится нужный порт и демон запуститься
+  Для удаления порта:
+    semanage port -d -t ssh_port_t -p tcp 5022
+
+NGINX смена порта:
+ Посмотреть, какие порты разрешены в типе http_port_t
+  semanage port -l|grep http_port_t
+
+DB:
+  systemctl stop mysql
+  chocon -v -R -t samba_share_t /var/lib/mysql # изменение контекста БД
+  restorecon -v -R /var/lib/mysql              # восстановление контекста БД
+  ls -Z /var/lib/mysql                         # контекст БД
+  cp -Z                                        # копирование с контекстом
+
+
+mkdir /test-dir
+echo 1234 > /test-dir/file1
+echo 1234 > /test-dir/file2
+ls -Z /test-dir/
+chcon -R -t samba_share_t /test-dir # меняем контекст для каталога
+restorecon -v /test-dir
+все изменения контекста будут хранится до ребута так как нет никакой компиляции, для того чтобы такие изменения записать необходимо ввести:
+  semanage fcontext -a -t samba_share_t "/test-dir(/.*)?"
+После этой команды, restorecon отработает по новым значениям.
+
+  seinfo -afile_type -x #просмотр всех типов selinux
+
+
+yum install -
+
+sealert -a /var/log/audit/audit.log # анализирует лог и в выводе предлагает варианты команд для исправления и варианты развития событий после этих команд
+
+ausearch -c 'nginx' --raw | audit2allow -M my-nginx # формирует модуль my-nginx.pp/my-nginx.te
+  или так:
+audit2allow -M php_add --debug < /var/log/audit/audit.log
+Далее загружаем выше созданный модуль, модуль будет работать на постоянке
+  semodule -i my-nginx0.pp
+
+semodule -l | grep nginx # проверка модулей
+Стартуем nginx и проверяем нестандартный порт
+  systemctl start nginx
+  netstat -ntpl |grep nginx
+Удаление модуля:
+  semodule -r my-nginx
+
+
+Булевые или параметраризированные политики
+  представляют из себя политики, которые описаны переменные с булевым типом (on/off)
+  управляются утилитами: getsebool и setsebool
+
+
+samba:
+  getsebool -a |grep samba            # смотрим параметры для samba
+  setsebool -P samba_share_fusefs on  # включаем параметр для fs
+
+Модули для ansible
+  setcontext
+  selinux
+
+  seinfo -afile_type -x

@@ -1,0 +1,46 @@
+[root@ns01 vagrant]#
+sealert -a /var/log/audit/audit.log
+
+Do
+allow this access for now by executing:
+# ausearch -c 'isc-worker0000' --raw | audit2allow -M my-iscworker0000
+# semodule -i my-iscworker0000.pp
+
+
+Do
+# semanage fcontext -a -t named_zone_t 'named.ddns.lab.view1.jnl'
+
+where FILE_TYPE is one of the following: dnssec_trigger_var_run_t ipa_var_lib_t krb5_host_rcache_t krb5_keytab_t named_cache_t named_log_t named_tmp_t named_var_run_t named_zone_t
+Then execute:
+restorecon -v 'named.ddns.lab.view1.jnl'
+
+
+Do
+allow this access for now by executing:
+# ausearch -c 'isc-worker0000' --raw | audit2allow -M my-iscworker0000
+# semodule -i my-iscworker0000.pp
+
+
+
+nsupdate -k /etc/named.zonetransfer.key
+server 192.168.50.10
+zone ddns.lab
+update add www.ddns.lab. 60 A 192.168.50.15
+send
+
+
+seinfo -afile_type -x #просмотр всех типов selinux
+
+chcon -R -t named_exec_t ./
+      named_exec_t
+      named_checkconf_exec_t
+      named_conf_t
+      named_cache_t
+      named_initrc_exec_t
+      named_unit_file_t
+      named_keytab_t
+      named_log_t
+      named_tmp_t
+      named_var_run_t
+      named_zone_t
+      systemd_hostnamed_exec_t
