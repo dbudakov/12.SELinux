@@ -43,13 +43,13 @@ Job for nginx.service failed because the control process exited with error code.
 [root@SELinux vagrant]# sealert -a /var/log/audit/audit.log
 
 ```
-В выводе мы увидим  способы решения ошибки с запуском nginx. Во-первых добавление указанного порта в тип указанного контекста, в выводе указаны каие типы можно расширить      
+В выводе мы увидим  способы решения ошибки с запуском nginx. Во-первых добавление указанного порта в тип указанного контекста, в выводе указаны какие типы можно расширить      
 ```
 Do
 # semanage port -a -t PORT_TYPE -p tcp 5081
     where PORT_TYPE is one of the following: http_cache_port_t, http_port_t, jboss_management_port_t, jboss_messaging_port_t, ntop_port_t, puppet_port_t.
 ```
-Во-вторых разрешение использования нестандартных портов, по сути открывает всем сервисам такую возможноть, что сравнимо с отключением SELinux   
+Во-вторых разрешение использования нестандартных портов, по сути, открывает всем сервисам такую возможноть, что сравнимо с отключением SELinux   
 ```
 Do
 setsebool -P nis_enabled 1
@@ -79,7 +79,7 @@ semanage port -d -t http_port_t -p tcp 5081
 ausearch -c 'nginx' --raw 
 ```
 ![](https://github.com/dbudakov/11.SELinux/blob/master/images/main/1_ausearch.png)     
-из вывода видно что она зависит от содержимого в файле `audit.log`, поэтому для формирования только нужного лога его желательно зачистить, и перезапустить рассматриваемый сервис. Запускаем формирование модуля и его включение, включени происходит через файл с расширением `.pp`   
+из вывода видно что она зависит от содержимого в файле `audit.log`, поэтому для формирования только нужного лога его желательно зачистить, и перезапустить рассматриваемый сервис. Запускаем формирование модуля и его включение. Включение происходит через файл с расширением `.pp`   
 ```
 ausearch -c 'nginx' --raw | audit2allow -M my-nginx
 semodule -i my-nginx.pp
@@ -114,13 +114,13 @@ setsebool -P nis_enabled 0
 ```
 type=AVC msg=audit(1589369529.013:2012): avc:  denied  { create } for  pid=7288 comm="isc-worker0000" name="named.ddns.lab.view1.jnl" scontext=system_u:system_r:named_t:s0 tcontext=system_u:object_r:etc_t:s0 tclass=file permissive=0
 ```
-а также  
+а также просмотр контекста нужных файлов
 ```
 [root@ns01 vagrant]# ls -Z /etc/named/dynamic/
 -rw-rw----. named named system_u:object_r:etc_t:s0       named.ddns.lab
 -rw-rw----. named named system_u:object_r:etc_t:s0       named.ddns.lab.view1
 ```
-Причем просто рекомендация `sealert` выполнить `semanage fcontext -a -t FILE_TYPE 'named.ddns.lab.view1.jnl'` не поможет,как я понял это из-за типа etc_t, в котором нет нужных разрешений, поэтому предварительно меняем тип контекста через `chcon` и после запускаем `semanage fcontext`   
+Причем просто рекомендация `sealert audit.log` выполнить `semanage fcontext -a -t FILE_TYPE 'named.ddns.lab.view1.jnl'` не поможет,как я понял это из-за типа `etc_t`, в котором нет нужных разрешений, поэтому предварительно меняем тип контекста через `chcon` и после запускаем `semanage fcontext`   
 ```
 chcon -R -t named_zone_t /etc/named/dynamic/
 semanage fcontext -a -t named_zone_t /etc/named/dynamic/
@@ -136,4 +136,4 @@ semanage fcontext -a -t named_zone_t /etc/named/dynamic/
 ```
 В результате с клиентской машины пройдет пинг до сервера по днс имени `ping www.ddns.lab`  
 ![](https://github.com/dbudakov/12.SELinux/blob/master/images/2/ddns.png)  
-решение оформлено в виде дополнительных задач для ansible при деплое стенда, решение можно проверить проверив доступность узла "www.ddns.lab" по ДНС имени, с клиентской машины.  
+решение оформлено в виде дополнительных задач для `ansible` при деплое стенда, решение можно проверить проверив доступность узла "www.ddns.lab" по ДНС имени, с клиентской машины.  
