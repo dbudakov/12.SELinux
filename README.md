@@ -16,7 +16,8 @@ https://github.com/mbfx/otus-linux-adm/blob/master/selinux_dns_problems/
 - Выбрать одно из решений для реализации, предварительно обосновав выбор;  
 - Реализовать выбранное решение и продемонстрировать его работоспособность.  
   
-## Решение  
+## Решение 
+### Первая часть
 Для выполнения первой части задания и назначения нестандартного порта добаляем строку `listen 5081;` в соответствующий контектст в файле `/etc/nginx/nginx.conf`      
 ```
     server {
@@ -108,8 +109,8 @@ ss -ntpl | grep nginx
 setsebool -P nis_enabled 0
 ```
 
-# Вторая часть  
-Проблема невозможности добавления зоны, заключается в типе контекста для файлов содержащих записи зон, на это указывает анализ файла `/var/log/audit/audit.log`   
+### Вторая часть  
+Проблема невозможности добавления зоны на стенде https://github.com/mbfx/otus-linux-adm/blob/master/selinux_dns_problems/ , заключается в типе контекста для файлов содержащих записи зон, на это указывает анализ файла `/var/log/audit/audit.log`   
 ```
 type=AVC msg=audit(1589369529.013:2012): avc:  denied  { create } for  pid=7288 comm="isc-worker0000" name="named.ddns.lab.view1.jnl" scontext=system_u:system_r:named_t:s0 tcontext=system_u:object_r:etc_t:s0 tclass=file permissive=0
 ```
