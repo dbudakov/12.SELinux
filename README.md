@@ -111,7 +111,7 @@ setsebool -P nis_enabled 0
 
 ### Вторая часть  
 ИЗМЕНЕНО:
-Можно решить двумя способами, это правкой SELinux отталкиваясь от конфигов и сохраняя строй ФС, либо перемещением файла DNS-зоны, и изменением конфига named.conf, без изменения SELinux.
+Можно решить двумя способами, это правкой SELinux отталкиваясь от конфигов и сохраняя строй ФС, либо перемещением файла DNS-зоны, и изменением конфига named.conf, без изменения SELinux. Выбирая из двух вариантов, я выбиру второй, потому что он прозрачен, хоть и неочевиден, всегда можно посмотреть что где лежит, и будет легче объяснить настройку другому специалисту, чем изменение контекстов SELinux.
 #### Вариант 1. Правим SELinux
 Проблема невозможности добавления зоны на стенде https://github.com/mbfx/otus-linux-adm/blob/master/selinux_dns_problems/ , заключается в типе контекста для файлов содержащих записи зон, на это указывает анализ файла `/var/log/audit/audit.log`   
 ```
@@ -157,12 +157,12 @@ cat /etc/named.conf
 >   type master;
 >   allow-transfer { key "zonetransfer.key"; };
 >   allow-update { key "zonetransfer.key"; };
->   file "/var/named/dynamic/named.ddns.lab.view1";
+>   file "/etc/named/dynamic/named.ddns.lab.view1";
 > };
 ```
 Увидим местоположение файла и посмотрим на контекст каталога.  
 ```
-ls -Z /var/named/dynamic/
+ls -Z /etc/named/dynamic/
 > -rw-rw----. named named system_u:object_r:etc_t:s0       named.ddns.lab
 > -rw-rw----. named named system_u:object_r:etc_t:s0       named.ddns.lab.view1
 ```
@@ -173,11 +173,20 @@ sudo semanage fcontext -l | grep dynamic
 > /var/named/dynamic(/.*)?                           all files          system_u:object_r:named_cache_t:s0 
 > /var/named/chroot/var/named/dynamic(/.*)?          all files          system_u:object_r:named_cache_t:s0 
 ```
-Из вывода видим что нужный нам контекст находится по пути `/var/named/dynamic/`, переносим нужный журнал зоны в настроеный каталог и меняе пользователя на `named` чтобы `bind` мог с ним работать  
+Из вывода видим что нужный нам контекст настроен на пути `/var/named/dynamic/`, переносим нужный журнал зоны в настроеный каталог меняя пользователя на `named` чтобы `bind` мог с ним работать, а также редактируем `named.conf`  
 ```
 mv /etc/named/dynamic/named.ddns.lab.view1  /var/named/dynamic/ 
 chown named:named /var/named/dynamic/*
 systemctl restart named
+
+## приводим настройку для зоны в /etc/named.conf  к следующему виду
+> // labs ddns zone
+> zone "ddns.lab" {
+>   type master;
+>   allow-transfer { key "zonetransfer.key"; };
+>   allow-update { key "zonetransfer.key"; };
+>   file "/var/named/dynamic/named.ddns.lab.view1";
+> };
 ```
 Смотрим изменения контекста на файле  
 ```
