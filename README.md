@@ -17,6 +17,11 @@ https://github.com/mbfx/otus-linux-adm/blob/master/selinux_dns_problems/
 - Реализовать выбранное решение и продемонстрировать его работоспособность.  
   
 ## Решение 
+Пакеты для анализа логов SELinux
+```
+yum install -y setools setroubleshoot-server
+```
+
 ### Первая часть
 Для выполнения первой части задания и назначения нестандартного порта добаляем строку `listen 5081;` в соответствующий контектст в файле `/etc/nginx/nginx.conf`      
 ```
